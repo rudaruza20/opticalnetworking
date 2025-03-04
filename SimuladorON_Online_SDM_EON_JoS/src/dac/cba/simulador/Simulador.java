@@ -784,7 +784,7 @@ public class Simulador extends Simulator {
 	        	/* Read adjacencies matrix and Build topology */
 	        	adjacencies= ReadFile("C:/Users/Ruben/OneDrive/Respaldos Laptop MSI 28092024/CommLetters/AdjacencyMatrix16n48eEON.txt",true); //15n46eNSF -6nNew_bigdistances
 	        	optical_reach = ReadFile("C:/Users/Ruben/OneDrive/Respaldos Laptop MSI 28092024/CommLetters/Sources/ModFormats/TR_SSMF_64GBd.txt",false);
-	        	nSC = 4; //4 7
+	        	nSC = 3; //4 7
 	        	F = 320;//6 20 40
 	        	MF = false; // depurar
 	        	simulationTime = 10000;//20 100 10000
@@ -794,7 +794,7 @@ public class Simulador extends Simulator {
 	        	trafficProfile = ReadFile("C:/Users/Ruben/OneDrive/Respaldos Laptop MSI 28092024/CommLetters/Sources/tpfullspecswbitrate4.txt",false); //tpfullspecswbitrate
 	        	GB = 10;
 	        	strategy = "PCA"; //options: FSA|PSA. Only for JoS //
-	        	Smax = 2; //max number of spatial channels to compute the Spa-SCh - new - 
+	        	Smax = 3; //max number of spatial channels to compute the Spa-SCh - new - 
 	        	G = 1; // group size for FJoS - new -
 	        	max_baud_rate = 64; //in GBd
 	        	ROADMType = "CCC"; //options: FNB|CCC|JoS. Useful for InS w/ or w/o LC // depurar

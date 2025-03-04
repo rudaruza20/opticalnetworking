@@ -803,21 +803,21 @@ public class Simulador extends Simulator {
 	        	/* Read adjacencies matrix and Build topology */
 	        	adjacencies= ReadFile("C:/Users/Ruben/OneDrive/Respaldos Laptop MSI 28092024/CommLetters/AdjacencyMatrix16n48eEON.txt",true); //15n46eNSF -6nNew_bigdistances
 	        	optical_reach = ReadFile("C:/Users/Ruben/OneDrive/Respaldos Laptop MSI 28092024/CommLetters/Sources/ModFormats/TR_SSMF_64GBd.txt",false);
-	        	nSC = 1; //4 7
+	        	nSC = 2; //4 7
 	        	F = 320;//6 20 40
 	        	//MF = false;
 	        	simulationTime = 10000;//20 100 10000 1000000
 	        	load_init = 32.0;
 	        	load_end = 32.0; //50.0 50.0 100.0
-	            //alpha = "1.0"; //options:  value|incremental|dynamic
+	            //alpha = "1.0"; //options:  value|incremental|dynamic - depurar -
 	        	trafficProfile = ReadFile("C:/Users/Ruben/OneDrive/Respaldos Laptop MSI 28092024/CommLetters/Sources/tpfullspecswbitrate4.txt",false);
 	        	GB = 10;
-	        	Smax = 1; //max number of spatial channels to compute the Spa-SCh - new - 
-	        	G = 1; // group size for FJoS - new -
+	        	Smax = 1; //max number of spatial channels to compute the Spa-SCh - depurar - 
+	        	G = 1; // group size for FJoS - depurar -
 	        	max_baud_rate = 64; // in GBd
 	        	ROADMType = "CCC"; //options: FNB|CCC|JoS. Useful for InS w/ or w/o LC
-	        	groomingStrategy = "non"; //options: non|predefined|dynamic. Only for JoS
-	        	strategy = "PSA"; // options: FSA|PSA. Only for JoS with flexible/variable Baud-rate
+	        	groomingStrategy = "non"; //options: non|predefined|dynamic. Only for JoS - depurar-
+	        	strategy = "PSA"; // options: FSA|PSA. Only for JoS with flexible/variable Baud-rate -depurar-
 	        	t_baudrate = "fixed"; //options for type of baudrate: flexible|fixed
 	        }	        	
 			int dim= adjacencies.getColumnCount();
