@@ -1,3 +1,4 @@
+//JLT 2020 with CTTC
 package dac.cba.simulador;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -112,47 +113,49 @@ import javax.swing.table.DefaultTableModel;
 	    int capacity; //spectrum capacity by core
 	    double load;
 	    ArrayList<Double> intervals;
-	    ArrayList<Integer> d_r; //demand requirements
+	    ArrayList<Double> bitRates;
 	    double totalbr;
-	    double totalbw;
 	    boolean MF; //type of fiber MF=1 MCF=0
 	    String alpha; //weight for number of FS, (1-alpha) weight for number of Sb-Ch
 	    double guard_band;
 	    String strategy;
 	    double bbp;
-	    double max_baud_rate;
 	    String ROADMType;
-	    String t_baudrate; //22072022
 	    File file;
 	    FileWriter writer;
-	    HFF_SpatialStrategy_SpaSCh_JoS hffspatial;
+	    //HFF_SpectralStrategy_SpeSCh hffspectral;
+	    //HFF_SpectralStrategy hffspectral;
+	    //HFF_SpatialStrategy_SpaSCh_InS_LC hffspatial;
+	    HFF_SpatialStrategy_SpaSCh_InS_FF hffspatial;
+	    //HFF_SpatialStrategy_SpaSCh_JoS hffspatial;
+	    //HFF_SpatialAlternative_7MCF hffspatial;
+	    //HFF_SpatialAlternative_12_19MCF hffspatial;
+	    //HFF_Spectral_SpatialSCh_7MCF hffspectralspatial; 
+	    //HFF_Spectral_SpatialSCh_12_19MCF hffspectralspatial;
 	    /**
 	    * Create a new Demand and
 	    * schedule the creation of the next demand
 	    */
-	    Generator (Network net, DefaultTableModel formats, int F, int elapsed, double load, DefaultTableModel trafficProfile, boolean MF, String alpha, double GB, String strategy, int Smax, int G, double max_baud_rate, String ROADMType, String groomingStrategy, String t_baudrate){
+	    Generator (Network net, DefaultTableModel formats, int F, int elapsed, double load, DefaultTableModel trafficProfile, boolean MF, String alpha, double GB, String strategy, int Smax, int G, double max_baud_rate, String ROADMType, String groomingStrategy){
 	    	this.simulationTime = elapsed; 
 	    	this.net = net;
 	    	this.formats = formats;
 	    	this.capacity= F;
 	    	this.load = load;
-	    	this.totalbr = 0;
-	    	this.totalbw = 0;
+	    	this.totalbr =0;
 	    	this.MF = MF;
 	    	this.alpha= alpha;
 	    	this.guard_band=GB;
 	    	this.strategy=strategy;
 	    	this.bbp=0;
-	    	this.max_baud_rate = max_baud_rate;
 	    	this.ROADMType = ROADMType;
-	    	this.t_baudrate = t_baudrate;
 	    	this.file = new File ("throughput"+Smax+".txt");
 	    	ArrayList<Double> probabilities = new ArrayList<Double> (trafficProfile.getRowCount());
 	    	intervals = new ArrayList<Double> (trafficProfile.getRowCount());
-	    	d_r = new ArrayList<Integer> (trafficProfile.getRowCount());
+	    	bitRates = new ArrayList<Double> (trafficProfile.getRowCount());
 	    	for (int j=0;j<trafficProfile.getColumnCount();j++){
 	    		for (int i=0;i<trafficProfile.getRowCount();i++){
-	    			if (j==0) d_r.add(Integer.parseInt((String)trafficProfile.getValueAt(i,j)));
+	    			if (j==0) bitRates.add(Double.parseDouble((String)trafficProfile.getValueAt(i,j)));
 	    			else{
 	    				double prob;
 	    				String s = (String)trafficProfile.getValueAt(i, j);
@@ -191,49 +194,80 @@ import javax.swing.table.DefaultTableModel;
 				e.printStackTrace();
 			}
 			*/
-	    	
-	    	hffspatial = new HFF_SpatialStrategy_SpaSCh_JoS (this.guard_band, this.strategy, Smax, max_baud_rate, groomingStrategy, t_baudrate);
-	    	
+	    	//hffspectral = new HFF_SpectralStrategy_SpeSCh();
+	    	//hffspectral = new HFF_SpectralStrategy();
+	    	//hffspatial = new HFF_SpatialStrategy_SpaSCh_InS_LC();
+	    	hffspatial = new HFF_SpatialStrategy_SpaSCh_InS_FF(this.guard_band, this.strategy, Smax, G, max_baud_rate);
+	    	//hffspatial = new HFF_SpatialStrategy_SpaSCh_JoS(this.guard_band, this.strategy, Smax, max_baud_rate, groomingStrategy);
+	    	//hffspatial = new HFF_SpatialAlternative_7MCF();
+	    	//hffspatial = new HFF_SpatialAlternative_12_19MCF();
+	    	//hffspectralspatial =  new HFF_Spectral_SpatialSCh_7MCF();
+	    	//hffspectralspatial =  new HFF_Spectral_SpatialSCh_12_19MCF();
 	    	
 	    }
 	    void execute(AbstractSimulator simulator) {
 	    	
-	    	Demand demand = new Demand(net, intervals, d_r, max_baud_rate, t_baudrate);
-	    	//Demand demand = new Demand(2,3,6,net,max_baud_rate);
-	    	//this.totalbr+=demand.getBitRate(); //demand bit-rate may change during allocation in the case of fixed baudrate. So, we can move line 203 and 204 after allocation execution (line 219 and 220)
-	    	//this.totalbw+=demand.getBw();
+	    	Demand demand = new Demand(net, intervals, bitRates);
+	    	this.totalbr+=demand.getBitRate();
+	        //System.out.println(" arrives new demand "+ demand.getId()+" ("+demand.getSrcNode().GetId()+"->"+demand.getDstNode().GetId()+","+demand.getBitRate()+"Gbps)");
+	        /* RSA and Core Assignment for new Demand*/
+	        //Spectral SCh
+	        /*
+	        int bNoServed = hffspectral.getNumberOfNoServedDemands();
+	        hffspectral.execute(this.net, demand, this.formats, this.capacity);
+	        int aNoServed = hffspectral.getNumberOfNoServedDemands();
+	        double blockedbr = hffspectral.getBlockedBitRate();
+	        double blockedbr_tr = hffspectral.getTRBlockedBitRate(); //OJO pending add
+	        double blockedbr_spe = hffspectral.getSpeBlockedBitRate(); //OJO pending add
+	        */
+	        //Spatial SCh
 	        
 	        int bNoServed = hffspatial.getNumberOfNoServedDemands();
 	        //long t1 = System.currentTimeMillis(); //To measure the time of heuristic execution
-	        hffspatial.execute(this.net, demand, this.formats, this.capacity, this.MF);
+	        //hffspatial.execute(this.net, demand, this.formats, this.capacity, this.MF); //JoS arreglar para que sea general para InS y JoS
+	        hffspatial.execute(this.net, demand, this.formats, this.capacity, this.MF, this.alpha, this.ROADMType);
 	        //long t2 = System.currentTimeMillis();
 	        //long time = t2-t1;
 	        //System.out.println(time/1000.0);
-	        
 	        int aNoServed = hffspatial.getNumberOfNoServedDemands();
 	        double blockedbr = hffspatial.getBlockedBitRate();
-	        double servedbr = hffspatial.getServedBitRate();//new 18022025
 	        double blockedbr_tr = hffspatial.getTRBlockedBitRate();
 	        double blockedbr_spe = hffspatial.getSpeBlockedBitRate();
-	        double blockedbw = hffspatial.getBlockedBw();
-	        this.totalbr+=servedbr;
-	    	//this.totalbw+=demand.getBw(); ?? check when it measures be necessary
-	        //System.out.println("served bit rate: "+servedbr+" Gbps");
+	        
+	        //Spectral&Spatial SCh
+	        /*
+	        int bNoServed = hffspectralspatial.getNumberOfNoServedDemands();
+	        hffspectralspatial.execute(this.net, demand, this.formats, this.capacity);
+	        int aNoServed = hffspectralspatial.getNumberOfNoServedDemands();
+	        double blockedbr = hffspectralspatial.getBlockedBitRate();
+	        double blockedbr_tr = hffspectralspatial.getTRBlockedBitRate();
+	        double blockedbr_spe = hffspectralspatial.getSpeBlockedBitRate();
+	        DefaultTableModel table = hffspectralspatial.getbitRate_ModLevel();
+	        */
+	        
 			//Schedule release event if demand was served
-	        //if (bNoServed == aNoServed){
-	        	for (Demand d:hffspatial.getListOfDemands()){
-	        		net.instantaneusCarriedBitRate+=2*d.getBitRate();    
-	        		net.cummulativeCarriedBitRate+=net.instantaneusCarriedBitRate;
-	        		net.measuredTimes++;;
-	        		ReleaseConn release = new ReleaseConn(this.net, this.load, this.simulationTime, this.writer);
-	        		release.insert(simulator, d, this.load);
-	        		//System.out.println("Demand id scheduled to be released: "+d.getId());
-	        	}
-	        //}
-	        //else {
+	        if (bNoServed ==aNoServed){
+	        	net.instantaneusCarriedBitRate+=2*demand.getBitRate();
+	        	/*
+	        	try {
+					this.writer.write(((Simulator)simulator).now()+"\t"+net.instantaneusCarriedBitRate+"\n");
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+	        	*/
+	        	//if (((Simulator)simulator).now()>this.load*2){ //it suppresses the transient at the beginning of the simulation    
+	        	net.cummulativeCarriedBitRate+=net.instantaneusCarriedBitRate;
+	        	net.measuredTimes++;;
+	        	//}
+	        	ReleaseConn release = new ReleaseConn(this.net, this.load, this.simulationTime, this.writer);
+	        	release.insert(simulator, demand, this.load);
+	        	
+	        }
+	        else {
 	        	//System.out.printf("Blocking Factor: %.5f \n",((double)aNoServed/((double)demand.getId()+1))); 
 	        	//System.out.printf("Bandwidth-Blocking Factor: %.5f \n",((double)blockedbr/(double)this.totalbr));
-	        //}
+	        }
 	        //Schedule new arrival demand event
 	        time += RandomTime.exponential(1.0); // Load = holding/inter-arrival= 20/1 (20:1)
 	        if (time < this.simulationTime){ /*System.out.println("Next demand is scheduled at "+time+" [time]");*/simulator.insert(this); }
@@ -266,9 +300,6 @@ import javax.swing.table.DefaultTableModel;
 	        			System.out.println(key3 + "\t" + value3);
 	        		}
 	        	}
-	        	//new-02072022
-	        	System.out.println("Number of Reused Lightpaths: "+hffspatial.getCounterOfReusedLightpaths());
-	        	//
 	        	//fin
 	        	//Print-out first results.- output format:
 	        	//overall BP \t overall Avg. cores/fibers under use per SCh \t Avg. n_OCs per Sb-Ch \t Avg. baud-rate per Sb-Ch per Spa-SCh \t Avg. number of FS per connection \t lreuseFactor \tAvg. Number of connections that employ 64-QAM \t Avg. Number of connections that employ 16-QAM \t Avg. Number of connections that employ 16-QAM \t Avg. Number of connections that employ QPSK \t Avg. Number of connections that employ BPSK 
@@ -292,9 +323,6 @@ import javax.swing.table.DefaultTableModel;
 	        	//fin
 	        	
 	        	this.bbp=(double)blockedbr/((double)this.totalbr);
-	        	//11022025: line 296 and 297 in case of expressing the bit-rate in terms of n_OCs for fixed baudrate
-	        	//if (t_baudrate=="fixed") this.bbp=(double)blockedbw/((double)this.totalbw);
-	        	//else this.bbp=(double)blockedbr/((double)this.totalbr);
 	        	demand.setUniqueId(0); //Reset demandId to 0 for consecutive simulations (different loads)
 	        	// view CDF of baud-rate, n_s, n_OC and alpha
 	        	for (Integer i:hffspatial.getCDF_nc())
@@ -321,7 +349,6 @@ import javax.swing.table.DefaultTableModel;
 	        	*/
 	        	
 	        	// end
-	        	System.out.println("Number of Reused Lightpaths: "+hffspatial.getCounterOfReusedLightpaths());
 	        }
 	    }
 	}
@@ -365,10 +392,7 @@ import javax.swing.table.DefaultTableModel;
 					//In order to compute the peak number of TRxs per node	
 						net.getNodes().get(path.getSrcNode().GetId()).setIncrementNumberOfActiveTrx(-1*path.getNumberOfCores()*path.getOCs());
 					//end	
-					//System.out.println("Demand id "+connBeingReleased.getId()+" is being released");
 					path.addCores(-1*connBeingReleased.getnumCores());
-					int index = path.getArrayId().indexOf(connBeingReleased.getId());
-					path.getArrayId().remove(index);
 					if (this.x==1){
 						net.instantaneusCarriedBitRate-=2*connBeingReleased.getBitRate();
 						/*
@@ -386,7 +410,6 @@ import javax.swing.table.DefaultTableModel;
 					}
 					//Release FSs and LightPaths - 22072022 For fixed baudrate --> pending to change by using number of OCs (numbers of subchanels * spatial channels). Number of subchannels = ceil (number of required OCs / number of spatial channels)
 					if (path.getNumberOfCores()==0){
-					//System.out.print("number of occupied cores for lightpath being released: "+path.getNumberOfCores()+" ");
 					int k=0; //Index of link e to obtain coreList per link
 					for (Link link:path.GetPath()){
 						int j=0; //printout fs id with "," or not
@@ -402,7 +425,7 @@ import javax.swing.table.DefaultTableModel;
 									/*
 									if (j<(path.getFreqSlots().size()-1))
 										System.out.print(fs.getId()+",");
-									else System.out.println(fs.getId()+"}");
+									else System.out.print(fs.getId()+"}");
 									*/
 								}
 								j++;
@@ -412,7 +435,6 @@ import javax.swing.table.DefaultTableModel;
 						k++;
 					}
 					net.getLightPaths().remove(z);
-					//System.out.println("Lightpath "+z+" for demand "+connBeingReleased.getId()+" was released");
 					n--;
 					z--;
 					}
@@ -437,22 +459,9 @@ import javax.swing.table.DefaultTableModel;
 				}
 			}
 	    	//System.out.println();
-			if(simulator.events.size()==0){
-				boolean test = false;
-	        	for (Link e:net.getLinks()){
-	        		for (Core c:e.getCores()){
-	        			if (c.getNumberOfFsInUse()!=0){
-	        				//System.out.println("Link: "+e.GetSrcNode().GetId()+"-->"+e.GetDstNode().GetId()+" Core: "+c.getId()+" "+c.getNumberOfFsInUse()+" slots ocupados");
-	        				test=true;
-	        				//break;
-	        			}
-	        		}
-	        		//if (test) break;
-	        	}
-	        	System.out.println("Net with load: "+test);
-			}
 		}
 		void insert(AbstractSimulator simulator, Demand demand, double load) {
+	        
 	        this.connBeingReleased = demand;
 	        double releaseTime = RandomTime.exponential(load);
 	        time = ((Simulator)simulator).now() + releaseTime;
@@ -616,7 +625,7 @@ public class Simulador extends Simulator {
 	public static DefaultTableModel formatTable (Network net, DefaultTableModel table){
 		DefaultTableModel formats;
 		//Create a new table with column names
-		Vector<Vector> vData= table.getDataVector(); //fixed 12022025
+		Vector<Vector> vData= table.getDataVector();
 		Vector<String> columnNames = new Vector<String>(); 
 		for (int j=0;j<table.getColumnCount();j++){
 			//Obtain the column names with value of BitRate cast in Double format
@@ -732,11 +741,10 @@ public class Simulador extends Simulator {
 			boolean MF;
 			double load=0.0,load_init, load_end, GB, max_baud_rate=0; //load.- Carga de la Red en Erlangs
 			double target_BBP=0.01, attained_BBP;
-			String strategy, alpha, ROADMType, groomingStrategy, t_baudrate;
+			String strategy, alpha, ROADMType, groomingStrategy;
 	        events = new ListQueue();
 	        
 	        if (args.length>0){
-	        	/*
 	        	adjacencies = ReadFile(args[0],true);
 	        	optical_reach = ReadFile(args[1],false);
 	        	nSC = Integer.parseInt(args[2]);
@@ -754,52 +762,28 @@ public class Simulador extends Simulator {
 	        	max_baud_rate = Double.parseDouble(args[14]); 
 	        	ROADMType = args[15];
 	        	groomingStrategy = args[16];
-	        	t_baudrate = args[17];
-	        	System.out.println("adja-"+"opt_reach-"+nSC+"-"+MF+"-"+F+"-"+simulationTime+"-"+load_init+"-"+load_end+"-"+alpha+"-"+"profile-"+GB+"-"+strategy+"-"+Smax+"-"+G+"-"+max_baud_rate+"-"+ROADMType+"-"+groomingStrategy+"-"+t_baudrate);
-	        	*/
-	        	nSC = Integer.parseInt(args[0]);
-	        	simulationTime = Integer.parseInt(args[1]);
-	        	load_init = Double.parseDouble(args[2]);
-	        	load_end = Double.parseDouble(args[3]);
-	        	trafficProfile = ReadFile(args[4],false);
-	        	Smax = Integer.parseInt(args[5]);
-	        	MF =  args[6].equals("1");
-	        	if (MF) t_baudrate = "flexible"; else t_baudrate = "fixed";
 	        	
-	        	adjacencies= ReadFile("C:/Users/Ruben/OneDrive/Respaldos Laptop MSI 28092024/CommLetters/AdjacencyMatrix16n48eEON.txt",true); //15n46eNSF -6nNew_bigdistances
-	        	optical_reach = ReadFile("C:/Users/Ruben/OneDrive/Respaldos Laptop MSI 28092024/CommLetters/Sources/ModFormats/TR_SSMF_64GBd.txt",false);
-	        	F = 320;//6 20 40
-	        	//MF = false; // depurar
-	            alpha = "1.0"; //options:  value|incremental|dynamic // depurar
-	        	//trafficProfile = ReadFile("C:/Users/Ruben/OneDrive/Respaldos Laptop MSI 28092024/CommLetters/Sources/tpfullspecswbitrate3.txt",false); //tpfullspecswbitrate
-	        	GB = 10;
-	        	strategy = "PCA"; //options: FSA|PSA. Only for JoS // 
-	        	G = 1; // group size for FJoS - new -
-	        	max_baud_rate = 64; //in GBd
-	        	ROADMType = "CCC"; //options: FNB|CCC|JoS. Useful for InS w/ or w/o LC // dep
-	        	//t_baudrate = "flexible"; //options for type of baudrate: flexible|fixed
-	        	groomingStrategy = "dynamic";
 	        }
+	        
 	        else {
 	        	/* Read adjacencies matrix and Build topology */
-	        	adjacencies= ReadFile("C:/Users/Ruben/OneDrive/Respaldos Laptop MSI 28092024/CommLetters/AdjacencyMatrix16n48eEON.txt",true); //15n46eNSF -6nNew_bigdistances
-	        	optical_reach = ReadFile("C:/Users/Ruben/OneDrive/Respaldos Laptop MSI 28092024/CommLetters/Sources/ModFormats/TR_SSMF_64GBd.txt",false);
-	        	nSC = 2; //4 7
-	        	F = 320;//6 20 40
-	        	MF = false; // depurar
-	        	simulationTime = 10000;//20 100 10000
-	        	load_init = 6.0;
-	        	load_end = 6.0; //50.0 50.0 100.0
-	            alpha = "1.0"; //options:  value|incremental|dynamic // depurar
-	        	trafficProfile = ReadFile("C:/Users/Ruben/OneDrive/Respaldos Laptop MSI 28092024/CommLetters/Sources/tpfullspecswbitrate4.txt",false); //tpfullspecswbitrate
-	        	GB = 10;
-	        	strategy = "PCA"; //options: FSA|PSA. Only for JoS //
-	        	Smax = 2; //max number of spatial channels to compute the Spa-SCh - new - 
-	        	G = 1; // group size for FJoS - new -
-	        	max_baud_rate = 64; //in GBd
-	        	ROADMType = "CCC"; //options: FNB|CCC|JoS. Useful for InS w/ or w/o LC // depurar
-	        	groomingStrategy = "dynamic"; //options: non|predefined|dynamic. Only for JoS
-	        	t_baudrate = "fixed"; //options for type of baudrate: flexible|fixed
+	        	adjacencies= ReadFile("C:/Users/Ruben/OneDrive/Respaldos Laptop MSI 28092024/CommLetters/AdjacencyMatrix9n26eINT2.txt",true); //15n46eNSF -6nNew_bigdistances
+	        	optical_reach = ReadFile("C:/Users/Ruben/OneDrive/Respaldos Laptop MSI 28092024/CommLetters/Sources/ModFormats/TR_FM_MCF.txt",false);
+	        	nSC = 42; //4 7
+	        	F = 128;//6 20 40
+	        	MF = false;
+	        	simulationTime = 1000000;//20 100 10000
+	        	load_init = 75.0;
+	        	load_end = 75.0; //50.0 50.0 100.0
+	            alpha = "1.0"; //options:  value|incremental|dynamic
+	        	trafficProfile = ReadFile("C:/Users/Ruben/OneDrive/Respaldos Laptop MSI 28092024/CommLetters/Sources/tpr2.txt",false);
+	        	GB = 9.0;
+	        	strategy = "FCA"; //options: FSA|PSA. Only for JoS
+	        	Smax = 42; //max number of spatial channels to compute the Spa-SCh - new - 
+	        	G = 42; // group size for FJoS - new -
+	        	max_baud_rate = 32;
+	        	ROADMType = "CCC"; //options: FNB|CCC|JoS. Useful for InS w/ or w/o LC
+	        	groomingStrategy = "non"; //options: non|predefined|dynamic. Only for JoS
 	        }	        	
 			int dim= adjacencies.getColumnCount();
 			Network net = BuildNode (dim);
@@ -810,11 +794,11 @@ public class Simulador extends Simulator {
 			//PrintListOfLinks(net);
 			//net.CreatePathsTable(); //no se usa, pues se calcula por cada demanda allpaths for forward and reverse direction
 	        //iterate until BBP is close to target BBP
-			int i=15; //iterations <= 15
+			int i=0; //iterations <= 15
 	        do {
 	        	load = (load_init+load_end)/2;
 	        	/* Create the generator & release objects */
-	        	Generator generator = new Generator(net, optical_reach, F, simulationTime,load,trafficProfile,MF,alpha,GB,strategy,Smax,G,max_baud_rate,ROADMType,groomingStrategy,t_baudrate);
+	        	Generator generator = new Generator(net, optical_reach, F, simulationTime,load,trafficProfile,MF,alpha,GB,strategy,Smax,G,max_baud_rate,ROADMType,groomingStrategy);
 	        
 	        	/* Start the generator by creating one demand immediately */
 	        	generator.time = 0.0;
@@ -837,6 +821,6 @@ public class Simulador extends Simulator {
 	        	System.gc();
 	        	//reset the counters for stadistics (e.g. BVTs and TRxs clearing all key-value pairs before executing new iteration (if apply)
 	        	resetCountersForStadistics(net);
-	        }while ((attained_BBP< (target_BBP-0.001) || attained_BBP>(target_BBP+0.001)) && i<=15);
+	        }while ((attained_BBP< (target_BBP-0.001) || attained_BBP>(target_BBP+0.001)) && i<=0);
 	    }
 	}	
