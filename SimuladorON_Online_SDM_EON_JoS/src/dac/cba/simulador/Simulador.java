@@ -799,7 +799,7 @@ public class Simulador extends Simulator {
 	        	max_baud_rate = 64; //in GBd
 	        	ROADMType = "CCC"; //options: FNB|CCC|JoS. Useful for InS w/ or w/o LC // depurar
 	        	groomingStrategy = "dynamic"; //options: non|predefined|dynamic. Only for JoS
-	        	t_baudrate = "fixed"; //options for type of baudrate: flexible|fixed
+	        	t_baudrate = "flexible"; //options for type of baudrate: flexible|fixed
 	        }	        	
 			int dim= adjacencies.getColumnCount();
 			Network net = BuildNode (dim);
