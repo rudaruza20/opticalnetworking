@@ -11,7 +11,7 @@ import javax.swing.table.DefaultTableModel;
 import ilog.concert.*;
 import ilog.cplex.*;
 
-public class EON_SDM_ILP10_MIMO {
+public class EON_SDM_ILP2_MIMO {
 	private long t0, t1,t2;
 	IloCplex cplex;
 	IloNumVar[] x;
@@ -20,7 +20,7 @@ public class EON_SDM_ILP10_MIMO {
 	private long construction_time,solution_time;
 	ArrayList<Path> paths =  new ArrayList<Path>();
 	
-	public EON_SDM_ILP10_MIMO() {
+	public EON_SDM_ILP2_MIMO() {
 		// TODO Auto-generated constructor stub
 		try 
 		{

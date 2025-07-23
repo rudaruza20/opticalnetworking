@@ -693,115 +693,23 @@ public class Simulador {
 	    paths=kdisjoint.execute(net.GetNode(0), net.GetNode(5));
 	    System.out.println("\n\nLink Protection from node "+net.GetNode(0).GetId()+" to node "+net.GetNode(5).GetId()+". Primary and Secondary Paths:");
 	    PrintListOfPaths(paths);
-	    /******************************************************************************************************************/
-		// 1st Objective:
-	    // Minimize the number of frequency slots to serve all demands given a Traffic Matrix (Assume enough spectrum capacity)
-		// 2nd Objective:
-		// Maximize the number of served demands with limited spectrum capacity. 
-	    /*******************************************************************************************************************/
+	    
 		
-		/*
-		//Algorithm SPSR
-		H_SPSR_MinFS hspsr = new H_SPSR_MinFS();
-		hspsr.execute(net, demands, formats, F); 
-		*/
-		
-		/*
-		//Algorithm BLSA
-		H_BLSA_MinFS hblsa = new H_BLSA_MinFS();
-		hblsa.execute(net, demands, formats, F);
-		*/
-		
-		/*
-		//Algorithm C-RMCSA of Bristol and Jordi et al., in JOCN 2016. 
-		H_CRMSA_MinFS crmsa = new H_CRMSA_MinFS();
-		crmsa.execute(net, demands, formatsMF, F, S, GB);
-		*/
-		
-		/*
-		//M-Heurística Min lp with MIMO
-		Meta_MinMIMO_CRMSA m_mimo = new Meta_MinMIMO_CRMSA();
-		m_mimo.execute(net, demands, formatsMF, formatsMCF, S, GB);
-		*/	
-		
-		/*
-		//M-Heurística Min lp with MIMO
-		Meta_MinMIMO_CRMSA_kSPs m_mimo = new Meta_MinMIMO_CRMSA_kSPs();
-		m_mimo.execute(net, demands, formatsMF, formatsMCF, S, GB);
-		*/
-		
-		/*
-		//ILP1 original from paper
-		EON_Optimizer_MinFS optimizer = new EON_Optimizer_MinFS();
-		optimizer.initialize(net, demands, formats, F);
-		optimizer.solve(net, demands, F, formats);
-		*/
-		
-		/*
-		//ILP2 with modified dimension decision variables 
-		EON_ILP_MinFS optimizer = new EON_ILP_MinFS();
-		optimizer.initialize(net, demands, formats, F);
-		optimizer.solve(net, demands, F, formats);
-		*/
-		
-		/******************************************************************************************************************/
-		// Other Implementation according to paper: Modeling the routing and spectrum allocation problem for flexgrid optical networks, Luis Velasco, et al.
-		// With use of channels.
-		// 1st Objective: Minimize the number of frequency slots to serve all demands given a Traffic Matrix (Assume enough spectrum capacity)
-		// 2nd Objective: Maximize the number of served demands with limited spectrum capacity or what is the same minimize blocking probability
-	    /*******************************************************************************************************************/
-		
-		/*
-		//ILP3 F
-		EON_ILP_MinFS_Channels optimizer = new EON_ILP_MinFS_Channels();
-		optimizer.initialize(net, demands, formats, F);
-		optimizer.solve(net, demands, F, formats);
-		*/
-		
-		/*
-		//ILP4
-		EON_ILP_MinBP optimizer = new EON_ILP_MinBP_Channels();
-		optimizer.initialize(net, demands, formats, F);
-		optimizer.solve(net, demands, F, formats);
-		*/
 		/******************************************************************************************************************/
 		// General Implementation for Flex-Grid/MCF with JoS FCA 
 		// Objective: Minimize the number of frequency slots to serve all demands given a Traffic Matrix (Assume enough spectrum capacity)
 		// &  In input parameters, verify if in all cases it does not matter the modulation format (MF or MCF).
 	    /*******************************************************************************************************************/
-		//ILP5:  Minimize the total number of FSs occupied over overall network
-		/*
-				EON_SDMF_ILP5_MinFS optimizer = new EON_SDM_ILP5_MinFS();
-				optimizer.initialize(net, demands, formats, F);
-				optimizer.solve(net, demands, F, formats);
-		*/
-		//ILP6:  Minimize the total number of FSs occupied in any MCF link e
+		//ILP1:  Minimize the total number of FSs occupied in any MCF link e
 		
-				EON_SDM_ILP6_MinFS optimizer = new EON_SDM_ILP6_MinFS();
+				EON_SDM_ILP1_MinFS optimizer = new EON_SDM_ILP1_MinFS();
 				optimizer.initialize(net, demands, formatsMCF, F);
 				optimizer.solve(net, demands, F, formatsMCF);
 		
-		//ILP7:  Minimize lps with MIMO
+		
+		//ILP2:  New ILP Model for MIN FS given a number of MAX n MIMO LPs
 		/*
-				EON_SDM_ILP7_MIMO optimizer = new EON_SDM_ILP7_MIMO();
-				optimizer.initialize(net, demands, formatsMF, (F+delta));
-				optimizer.solve(net, demands, (F+delta), formatsMF);
-		*/
-		//ILP8:  Minimize lps with MIMO. Abbreviated (v2)
-		/*
-				EON_SDM_ILP8_MIMO optimizer = new EON_SDM_ILP8_MIMO();
-				optimizer.initialize(net, demands, formatsMF, (F+delta));
-				optimizer.solve(net, demands, (F+delta), formatsMF);
-		*/
-		//ILP9:  Joint ILP of MIN MIMO and Spectrum Occupation (with errors??)
-		/*		
-				EON_SDM_ILP9_MIMO optimizer = new EON_SDM_ILP9_MIMO();
-				optimizer.initialize(net, demands, formatsMF, (F+delta));
-				optimizer.solve(net, demands, (F+delta), formatsMF);
-		*/
-		//ILP10:  New ILP Model for MIN FS given a number of MAX n MIMO LPs
-		/*
-				EON_SDM_ILP10_MIMO optimizer = new EON_SDM_ILP10_MIMO();
+				EON_SDM_ILP10_MIMO optimizer = new EON_SDM_ILP2_MIMO();
 				optimizer.initialize(net, demands, formatsMF, (F+delta), maxLPsMIMO);
 				optimizer.solve(net, demands, (F+delta), formatsMF);
 		*/

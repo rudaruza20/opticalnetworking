@@ -1,6 +1,7 @@
 
 /*
- * Minimize lps with MIMO Abbreviated (v2)
+ * ILP implementation suggested in: Routing and Spectrum Assignment in
+Spectrum Sliced Elastic Optical Path Network, Mirosław Klinkowski and Krzysztof Walkowiak
  */
 
 package dac.cba.simulador;
@@ -11,7 +12,7 @@ import javax.swing.table.DefaultTableModel;
 import ilog.concert.*;
 import ilog.cplex.*;
 
-public class EON_SDM_ILP8_MIMO {
+public class EON_SDM_ILP1_MinFS {
 	private long t0, t1,t2;
 	IloCplex cplex;
 	IloNumVar[] x;
@@ -20,7 +21,7 @@ public class EON_SDM_ILP8_MIMO {
 	private long construction_time,solution_time;
 	ArrayList<Path> paths =  new ArrayList<Path>();
 	
-	public EON_SDM_ILP8_MIMO() {
+	public EON_SDM_ILP1_MinFS() {
 		// TODO Auto-generated constructor stub
 		try 
 		{
@@ -89,14 +90,14 @@ public class EON_SDM_ILP8_MIMO {
 			for (Demand d:demands){
 				//System.out.println("demand: "+demands.get(d).GetId());
 				int pos = formats.findColumn(Double.toString(d.GetBitRate()));
-				int k=1;
+				int j=1;
 				for (Path p: net.GetPaths(d.GetSrcNode().GetId(), d.GetDstNode().GetId(), pos-2)){
 					for (Channel c:p.getChannels()){
 						expr.addTerm(x[l], 1);
 						l++;
 					}
-					if (k>=3) break; //k=3
-					k++;
+					if (j>=3) break; //k=3
+					j++;
 				}
 				cplex.addEq(expr, 1);
 				expr.clear();
@@ -104,14 +105,14 @@ public class EON_SDM_ILP8_MIMO {
 			
 			//(1b)
 			int shift=0;
-			//int e_ = 0;
+			int e_ = 0;
 			for (Link e:net.getLinks()){
 				for (int s=0;s<S;s++){
 					l=0;
 					for (Demand d:demands){
 						//System.out.println("demand: "+demands.get(d).GetId());
 						int pos = formats.findColumn(Double.toString(d.GetBitRate()));
-						int k=1;
+						int j=1;
 						for (Path p: net.GetPaths(d.GetSrcNode().GetId(), d.GetDstNode().GetId(), pos-2)){
 							if (containsLink(p,e)){
 								for (Channel c:p.getChannels()){
@@ -125,49 +126,53 @@ public class EON_SDM_ILP8_MIMO {
 								shift = p.getChannels().size();
 								l+=shift;
 							}
-							if (k>=3) break; //k=3
-							k++;
+							if (j>=3) break; //k=3
+							j++;
 						}
 					}
-					//expr2.addTerm(y[e_][s], 1);
-					cplex.addLe(expr, 1);
+					expr2.addTerm(y[e_][s], 1);
+					cplex.addLe(expr, expr2);
 					expr.clear();
-					//expr2.clear();
+					expr2.clear();
 				}
-				//e_++;
+				e_++;
+			}
+			//(1c)
+			for(int s = 0; s<S; s++)
+			{
+				expr2.addTerm(z[s], net.getLinks().size());
+				
+				for(int e = 0; e<net.getLinks().size(); e++)
+				{
+					expr.addTerm(y[e][s], 1);
+				}
+				
+				cplex.addLe(expr, expr2);
+				expr.clear();
+				expr2.clear();
 			}
 			
 			// Objective function
-			l=0;
-			for (Demand d:demands)
+			for(int s = 0; s<S; s++)
 			{
-				int pos = formats.findColumn(Double.toString(d.GetBitRate()));
-				int k=1; //k-shortest Path
-				for (Path p: net.GetPaths(d.GetSrcNode().GetId(), d.GetDstNode().GetId(), pos-2)){
-					for (Channel c:p.getChannels()){
-						expr.addTerm(x[l], c.getMimoStatus());
-						l++;
-					}
-					if (k>=3) break;
-					k++;
-				}
+				expr.addTerm(z[s],1+(1+s)*10E-4);
+				//expr.addTerm(z[s],1);
 			}
-			
 			
 			l=0;
 			for (Demand d:demands){
+				//System.out.println("demand: "+demands.get(d).GetId());
 				int pos = formats.findColumn(Double.toString(d.GetBitRate()));
-				int k=1;
+				int j=1;
 				for (Path p: net.GetPaths(d.GetSrcNode().GetId(), d.GetDstNode().GetId(), pos-2)){
 					for (Channel c:p.getChannels()){
 						expr.addTerm(x[l], p.getHops()*p.getnumFS()*10E-4);
 						l++;
 					}
-					if (k>=3) break;
-					k++;
+					if (j>=3) break;
+					j++;
 				}
 			}
-			
 			
 			IloObjective objective_function = cplex.minimize(expr);
 			cplex.add(objective_function);
@@ -214,21 +219,20 @@ public class EON_SDM_ILP8_MIMO {
 				
 				System.out.println("Found feasible solution in "+(solution_time)/1000.0+" sec.");
 				
-				/*
-				int busyIndex = 0, maxIndex=0;
+				
+				int index = 0, maxIndex=0;
 				for(int f = 0; f<S; f++)
 				{
 					if(cplex.getValue(z[f])>=0.99 && cplex.getValue(z[f])<=1.01)
 					{
 						//System.out.println("FS index assigned: "+f);
-						busyIndex++;
+						index++;
 						if (f>maxIndex) maxIndex=f;
 					}
 				}
-				*/
 				
 				//System.out.println("Utilized Frequency Slots = "+F);
-				int mimoCount=0;
+				
 				int l=0, t_slots=0;
 				for (Demand d:demands){
 					//System.out.println("demand: "+demands.get(d).GetId());
@@ -237,12 +241,7 @@ public class EON_SDM_ILP8_MIMO {
 					for (Path p: net.GetPaths(d.GetSrcNode().GetId(), d.GetDstNode().GetId(), pos-2)){
 						for (Channel c:p.getChannels()){
 							if(cplex.getValue(x[l])>=0.99 && cplex.getValue(x[l])<=1.01){
-								System.out.print("Demand "+d.GetId()+" utilizes candidate path "+j+" with ");
-								if (c.getMimoStatus()==1){
-									System.out.print(" MIMO: "+p.GetPath().get(0).GetSrcNode().GetId());
-									mimoCount++;
-								}
-								else System.out.print(" no MIMO: "+p.GetPath().get(0).GetSrcNode().GetId());
+								System.out.print("Demand "+d.GetId()+" utilizes candidate path "+j+": "+p.GetPath().get(0).GetSrcNode().GetId());
 								for (Link e : p.GetPath()){
 									System.out.print("-"+e.GetDstNode().GetId());
 								}
@@ -255,11 +254,9 @@ public class EON_SDM_ILP8_MIMO {
 						j++;
 					}
 				}
-				//System.out.println("Utilized Frequency Slots = "+busyIndex);
-				//System.out.println("max FS(id) used in any MF/MCF link = "+maxIndex);
+				System.out.println("Utilized Frequency Slots = "+index);
+				System.out.println("max FS(id) used in any MF/MCF link = "+maxIndex);
 				System.out.println("Total nFSs network-wide: "+t_slots*22);
-				System.out.println("Number of MIMO LPs: "+mimoCount);
-				System.out.printf("Percentage of lps with MIMO: %.5f ",(double)mimoCount/(double)demands.size());
 			}
 			else
 			{
