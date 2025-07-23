@@ -801,6 +801,7 @@ public class Simulador extends Simulator {
 	        
 	        else {
 	        	/* Read adjacencies matrix and Build topology */
+	        	//for PSC2025
 	        	adjacencies= ReadFile("C:/Users/Ruben/OneDrive/Respaldos Laptop MSI 28092024/CommLetters/AdjacencyMatrix16n48eEON.txt",true); //15n46eNSF -6nNew_bigdistances
 	        	optical_reach = ReadFile("C:/Users/Ruben/OneDrive/Respaldos Laptop MSI 28092024/CommLetters/Sources/ModFormats/TR_SSMF_64GBd.txt",false);
 	        	nSC = 2; //4 7
