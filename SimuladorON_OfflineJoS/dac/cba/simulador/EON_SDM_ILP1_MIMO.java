@@ -1,7 +1,6 @@
 
 /*
- * ILP implementation suggested in: Routing and Spectrum Assignment in
-Spectrum Sliced Elastic Optical Path Network, Mirosław Klinkowski and Krzysztof Walkowiak
+ * ILP for MIN FS with a given MAX number of LPs with MIMO Equalization
  */
 
 package dac.cba.simulador;
@@ -12,7 +11,7 @@ import javax.swing.table.DefaultTableModel;
 import ilog.concert.*;
 import ilog.cplex.*;
 
-public class EON_SDM_ILP1_MinFS {
+public class EON_SDM_ILP1_MIMO {
 	private long t0, t1,t2;
 	IloCplex cplex;
 	IloNumVar[] x;
@@ -21,7 +20,7 @@ public class EON_SDM_ILP1_MinFS {
 	private long construction_time,solution_time;
 	ArrayList<Path> paths =  new ArrayList<Path>();
 	
-	public EON_SDM_ILP1_MinFS() {
+	public EON_SDM_ILP1_MIMO() {
 		// TODO Auto-generated constructor stub
 		try 
 		{
@@ -31,7 +30,7 @@ public class EON_SDM_ILP1_MinFS {
 		}
 	}
 	//C: Capacity of the Spectrum of the links.  
-	public void initialize(Network net,ArrayList<Demand> demands, DefaultTableModel formats, int S)
+	public void initialize(Network net,ArrayList<Demand> demands, DefaultTableModel formats, int S, int maxLPsMIMO)
 	{
 		//C : number of optical Channels (Lambdas)
 		t0 = System.currentTimeMillis();
@@ -151,6 +150,25 @@ public class EON_SDM_ILP1_MinFS {
 				expr.clear();
 				expr2.clear();
 			}
+			//(1d)
+			
+			l=0;
+			for (Demand d:demands)
+			{
+				int pos = formats.findColumn(Double.toString(d.GetBitRate()));
+				int k=1; //k-shortest Path
+				for (Path p: net.GetPaths(d.GetSrcNode().GetId(), d.GetDstNode().GetId(), pos-2)){
+					for (Channel c:p.getChannels()){
+						expr.addTerm(x[l], c.getMimoStatus());
+						l++;
+					}
+					if (k>=3) break;
+					k++;
+				}
+			}
+			cplex.addEq(expr,maxLPsMIMO);
+			expr.clear();
+			
 			
 			// Objective function
 			for(int s = 0; s<S; s++)
@@ -176,7 +194,6 @@ public class EON_SDM_ILP1_MinFS {
 			
 			IloObjective objective_function = cplex.minimize(expr);
 			cplex.add(objective_function);
-			expr.clear();
 			
 		}catch (IloException ev) 
 		{
@@ -232,7 +249,7 @@ public class EON_SDM_ILP1_MinFS {
 				}
 				
 				//System.out.println("Utilized Frequency Slots = "+F);
-				
+				int mimoCount=0;
 				int l=0, t_slots=0;
 				for (Demand d:demands){
 					//System.out.println("demand: "+demands.get(d).GetId());
@@ -241,7 +258,12 @@ public class EON_SDM_ILP1_MinFS {
 					for (Path p: net.GetPaths(d.GetSrcNode().GetId(), d.GetDstNode().GetId(), pos-2)){
 						for (Channel c:p.getChannels()){
 							if(cplex.getValue(x[l])>=0.99 && cplex.getValue(x[l])<=1.01){
-								System.out.print("Demand "+d.GetId()+" utilizes candidate path "+j+": "+p.GetPath().get(0).GetSrcNode().GetId());
+								System.out.print("Demand "+d.GetId()+" utilizes candidate path "+j+" with ");
+								if (c.getMimoStatus()==1){
+									System.out.print(" MIMO: "+p.GetPath().get(0).GetSrcNode().GetId());
+									mimoCount++;
+								}
+								else System.out.print(" no MIMO: "+p.GetPath().get(0).GetSrcNode().GetId());
 								for (Link e : p.GetPath()){
 									System.out.print("-"+e.GetDstNode().GetId());
 								}
@@ -255,6 +277,7 @@ public class EON_SDM_ILP1_MinFS {
 					}
 				}
 				System.out.println("Utilized Frequency Slots = "+index);
+				System.out.println("Number of MIMO LPs: "+mimoCount);
 				System.out.println("max FS(id) used in any MF/MCF link = "+maxIndex);
 				System.out.println("Total nFSs network-wide: "+t_slots*22);
 			}
