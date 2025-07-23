@@ -8,11 +8,12 @@ import java.util.Vector;
 
 import javax.swing.table.DefaultTableModel;
 
-
+//PRUEBA DE VALIDACION REGLA BRANCH
 public class Simulador {
 	private static ArrayList<Demand> demands = new ArrayList<Demand>();
 	private static DefaultTableModel formatsMF; 
-	private static DefaultTableModel formatsMCF; 
+	private static DefaultTableModel formatsMCF;
+	
 
 	public Simulador() {
 		// TODO Auto-generated constructor stub
