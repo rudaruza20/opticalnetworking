@@ -8,6 +8,7 @@ import java.util.Vector;
 
 import javax.swing.table.DefaultTableModel;
 
+//v1
 
 public class Simulador {
 	private static ArrayList<Demand> demands = new ArrayList<Demand>();
