@@ -14,6 +14,7 @@ import javax.swing.table.DefaultTableModel;
 //Prueba sin lock branch
 //Prueba con ruleset deshabilitado
 //Prueba desde usuario admin...
+//Pruba repositorio privado
 public class Simulador {
 	private static ArrayList<Demand> demands = new ArrayList<Demand>();
 	private static DefaultTableModel formatsMF; 
