@@ -12,6 +12,7 @@ import javax.swing.table.DefaultTableModel;
 //INTEGRACION DE DATOS 
 // Prueba 24 de julio.
 //Prueba sin lock branch
+//Prueba con ruleset deshabilitado
 public class Simulador {
 	private static ArrayList<Demand> demands = new ArrayList<Demand>();
 	private static DefaultTableModel formatsMF; 
