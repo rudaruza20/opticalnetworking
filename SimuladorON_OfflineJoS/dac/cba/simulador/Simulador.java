@@ -9,12 +9,14 @@ import java.util.Vector;
 import javax.swing.table.DefaultTableModel;
 
 //PRUEBA DE VALIDACION REGLA BRANCH
+//INTEGRACION DE DATOS 
+// Prueba 24 de julio.
+//Prueba sin lock branch
 public class Simulador {
 	private static ArrayList<Demand> demands = new ArrayList<Demand>();
 	private static DefaultTableModel formatsMF; 
 	private static DefaultTableModel formatsMCF;
 	
-
 	public Simulador() {
 		// TODO Auto-generated constructor stub
 	}
