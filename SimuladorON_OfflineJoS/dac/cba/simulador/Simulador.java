@@ -13,7 +13,7 @@ import javax.swing.table.DefaultTableModel;
 // Prueba 24 de julio.
 //Prueba sin lock branch
 //Prueba con ruleset deshabilitado
-//Prueba desde usuario admin.
+//Prueba desde usuario admin..
 public class Simulador {
 	private static ArrayList<Demand> demands = new ArrayList<Demand>();
 	private static DefaultTableModel formatsMF; 
