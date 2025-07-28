@@ -314,7 +314,7 @@ public class Simulador {
 		//net.joinChannels(); // c Set: union of candidate channels
 		return;
 	}
-	//for two TR tables,MF(with MIMO) and MCF (without MIMO)
+	//for two TR tables, MF(with MIMO) and MCF (without MIMO)
 	public static void computePathsMiMo (Network net, int F, int S, double GB){
 		Node srcnode, dstnode;
 		int col;
@@ -654,16 +654,16 @@ public class Simulador {
         	maxLPsMIMO = Integer.parseInt(args[9]);
         }
 		else {
-			adjacencies = ReadFile("/home/platic/AdjacencyMatrix9n26eINT2.txt",true);
-			demandsTable = ReadFile("/home/platic/CommLetters/Sources/Demandas/(600)Demands_INT2_FlexGrid.txt",false);  
-			modulationFormatsMF = ReadFile("/home/platic/CommLetters/Sources/ModFormats/TR_GN_Model_xMF.txt",false);
-			modulationFormatsMCF = ReadFile("/home/platic/CommLetters/Sources/ModFormats/TR_19MCF.txt",false);
+			adjacencies = ReadFile("C:/Users/ruben.rumipamba.01/eclipse-workspace/SDM offline/sources/AdjacencyMatrix6n16eNew_Medium.txt",true);
+			demandsTable = ReadFile("C:/Users/ruben.rumipamba.01/eclipse-workspace/SDM offline/sources/(600)Demands_6n16e_FlexGrid.txt",false);  
+			modulationFormatsMF = ReadFile("C:/Users/ruben.rumipamba.01/eclipse-workspace/SDM offline/sources/TR_GN_Model_xMF.txt",false);
+			modulationFormatsMCF = ReadFile("C:/Users/ruben.rumipamba.01/eclipse-workspace/SDM offline/sources/TR_19MCF.txt",false);
 			fiberType = true; //1: MF, 0:MCF
 			F = 260; //Spectrum Capacity: Total Number of Frequency Slots in the spectrum of the links
 			S = 19;
 			GB = 7.5;
 			delta = 0;//When output is MIN MiMo LPs, delta is the allowed penalty in FSs regarding the number of F (#FSs occupied in MF solution).
-			maxLPsMIMO = 0;
+			maxLPsMIMO = 132;
 		}
 		int dim = adjacencies.getColumnCount();
 		Network net = BuildNode (dim);
@@ -675,8 +675,8 @@ public class Simulador {
 		labelColumnNames(modulationFormatsMF, modulationFormatsMCF);
 		//PrintListOfDemands(net);
 		//computeUserPaths(net);
-		computePaths(net, formatsMCF, F, S, GB, fiberType); //according to the demands. Pre-compute all distinct routes (candidate Paths) to serve all demands in order to run ILP optimization -for only TR table either for MF or MCF -
-		//computePathsMiMo(net,(F+delta), S, GB); //according to the demands. Pre-compute all distinct routes (candidate Paths) to serve all demands in order to run ILP optimization - for two TR tables, one for MF and other for MCF -
+		//computePaths(net, formatsMCF, F, S, GB, fiberType); //according to the demands. Pre-compute all distinct routes (candidate Paths) to serve all demands in order to run ILP optimization -for only one TR table either for MF or MCF -
+		computePathsMiMo(net,(F+delta), S, GB); //according to the demands. Pre-compute all distinct routes (candidate Paths) to serve all demands in order to run ILP optimization - for two TR tables, one for MF and other for MCF -
 		//FindOutPaths(net);
 		
 	    /*
@@ -706,5 +706,18 @@ public class Simulador {
 				optimizer.initialize(net, demands, formatsMF, (F+delta), maxLPsMIMO);
 				optimizer.solve(net, demands, (F+delta), formatsMF);
 		
+		//ILP2:  Minimize lps with MIMO
+		/*
+				EON_SDM_ILP2_MIMO optimizer = new EON_SDM_ILP2_MIMO();
+				optimizer.initialize(net, demands, formatsMF, (F+delta));
+				optimizer.solve(net, demands, (F+delta), formatsMF);
+		*/
+				
+		//ILP auxiliar:  Minimize the total number of FSs occupied in any MCF/MF link e (w/o considering maxLPsMIMO, useful to find out the upper (MCF) and lower bound (MF) the objective function of ILP1 )
+		/*	
+				EON_SDM_ILP_MinFS optimizer = new EON_SDM_ILP_MinFS();
+				optimizer.initialize(net, demands, formatsMF, F);
+				optimizer.solve(net, demands, F, formatsMF);
+		*/
 	}
 }
