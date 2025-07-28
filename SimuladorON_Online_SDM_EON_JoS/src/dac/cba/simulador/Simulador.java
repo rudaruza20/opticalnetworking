@@ -763,7 +763,7 @@ public class Simulador extends Simulator {
 	        	load_end = Double.parseDouble(args[3]);
 	        	trafficProfile = ReadFile(args[4],false);
 	        	Smax = Integer.parseInt(args[5]);
-	        	MF =  args[6].equals("1");
+	        	MF =  args[6].equals("1"); //aux. boolean variable to define baudrate type
 	        	if (MF) t_baudrate = "flexible"; else t_baudrate = "fixed";
 	        	
 	        	adjacencies= ReadFile("C:/Users/Ruben/OneDrive/Respaldos Laptop MSI 28092024/CommLetters/AdjacencyMatrix16n48eEON.txt",true); //15n46eNSF -6nNew_bigdistances
